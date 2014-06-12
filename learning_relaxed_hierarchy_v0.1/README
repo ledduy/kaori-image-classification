@@ -1,0 +1,75 @@
+Table of Contents
+=================
+
+- Introduction
+- Usage
+- Example
+- Additional Information
+
+Introduction
+============
+
+This software is a reference implementation of the algorithm introduced in the following paper:
+
+T. Gao and D. Koller
+Discriminative Learning of Relaxed Hierarchy for Large-scale Visual Recognition
+In Proceedings of 13th International Conference on Computer Vision
+
+Note that the input data format currently supported is the precomputed kernel for efficiency
+reason (multiple classifiers are repeatly trained on the common training set, so many kernel
+evaluations can be shared). Modifying the code to deal with the standard feature matrix
+(e.g., the data format used by libsvm) should be straightforward.
+
+
+Usage
+=====
+matlab> model = relaxed_hierarchy_train(Y_train, K_train, config);
+        -Y_train:
+            An N by 1 vector of training labels.
+        -K_train:
+            An N by N precomputed kernel matrix, i.e., K_train(i, j) = K(x_i, x_j), 
+            where K is some kernel function. 
+        -config:
+            A struct specifying various parameters.
+
+
+matlab> [Y_pred, accuracy, confusion_matrix, error_info, ...
+ kernel_eval_cnt, classifier_eval_cnt] = relaxed_hierarchy_predict(Y_test, K_test, model, [num_of_processes]);
+        -Y_test:
+            An M by 1 vector of prediction labels. If labels of test
+            data are unknown, simply use any random values.
+        -K_test:
+            An N by M precomputed kernel matrix, where N is the number of training
+            instances, and M is the number of test instances. K_test(i, j) = K(x_i_train, x_j_test),
+            where x_i_train is the i-th training instance, and x_j_test is the j-th test instance.
+        -model:
+            The output of relaxed_hierarchy_train.
+        -num_of_processes:
+            Optional argument specifying the number of parallel matlab processes.
+
+configuration file:
+     #confusion_matrix_fn: the confustion matrix used by the bottom-up initialization
+     #rho: threshold for a class to be active. The range of the minimum average hinge loss is almost bounded by (0, 1], so it should be enough to sample rho in this range for tuning.
+     #C: regularization trade-off
+     #B: tolerance for inbalance
+     #num_samples: number of samples for bottom-up initialization
+     #hierarchy_level: the number of levels of the hierarchy. Nodes below the maximum level will be 1-vs-all nodes.
+     #c_one_vs_all: C for the 1-vs-all nodes
+     #max_num_iter: number of iterations for the alternating method (In our experiments on the SUN and Caltech256 datasets, we used max_num_iter = 2 or 3, which has better performance. We think small values of max_num_iter (< 10) may prevent the algorithm from overfitting, if very strong features/kernels are used and/or there are not many training instances per class.)
+     #init_method: initialization method for the alternating method (bottom_up or top_down)
+     #num_proc: the number of matlab processes
+     #kernel_type: if it's set to "linear", the objective value of the node optimization problem is used to select models from multiple initializations, otherwise, for nonlinear kernels the average number of support vectors will be used.
+     #alpha: for top_down initialization
+
+Example
+=====    
+Please refer to main_demo.m.
+
+
+Additional Information
+=====
+1. Our code used libsvm for SVM training. We modified the orginal code to get additional information, e.g., ||w||^2 for nonlinear kernel. Precompiled mex file is provided, but if your computer has a different system that cannot use the precompiled version, then just compile it by going to ./libsvm-mat-2.89-3-modified and typing "make", and replace the original version ./svmtrain.mexa64.
+
+2. We recommend vlfeat for computing kernels.
+
+Please contact Tianshi Gao <tianshig@stanford.edu> for questions and bug reports.
