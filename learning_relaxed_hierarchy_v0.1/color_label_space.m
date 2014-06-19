@@ -1,3 +1,4 @@
+% Day la ham quan trong nhat - tim ra mu 
 function mu = color_label_space(Y, X, model, config)
 
 y_space = unique(Y);
